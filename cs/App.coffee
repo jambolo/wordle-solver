@@ -10,11 +10,23 @@ import { FormControl, FormControlLabel } from '@mui/material';
 import { Button } from '@mui/material';
 import { Box } from '@mui/material';
 `
+# Normal colors
+COLOR =
+  PRESENT:    "#c9b458"
+  CORRECT:    "#6aaa64"
+  ABSENT:     "#787c7e"
+
+# # Dark theme colors
+# COLOR =
+#   PRESENT:    "#b59f3b"
+#   CORRECT:    "#538d4e"
+#   ABSENT:     "#3a3a3c"
+#   BACKGROUND: "#121213"
 
 ColoredLetter = (props) ->
   { letter, color } = props
   <Grid item xs={1}>
-    <Box sx={{backgroundColor: color}}> <font size={7}> {letter} </font></Box>
+    <Box sx={{backgroundColor: color}}> <font size={7}> {letter.toUpperCase()} </font></Box>
   </Grid>
 
 Try = (props) ->
@@ -32,16 +44,16 @@ Tries = (props) ->
 NextTryLetter = (props) ->
   {letter} = props
   <Grid item xs={1}>
-    <Box sx={{border: "2px solid lightgray"}}><font size={7}><b> {letter} </b></font> </Box>
+    <Box sx={{border: "2px solid lightgray"}}><font size={7}><b> {letter.toUpperCase()} </b></font> </Box>
   </Grid>
 
 ColorSelector = (props) ->
   { id, onChange } = props
   <FormControl>
     <RadioGroup onChange={(event) -> onChange(id, event.target.value)}>
-      <FormControlLabel value="lightgray" control={<Radio />} label="gray" />
-      <FormControlLabel value="yellow" control={<Radio />} label="yellow" />
-      <FormControlLabel value="lightgreen" control={<Radio />} label="green" />
+      <FormControlLabel value={COLOR.ABSENT} control={<Radio />} label="gray" />
+      <FormControlLabel value={COLOR.PRESENT} control={<Radio />} label="yellow" />
+      <FormControlLabel value={COLOR.CORRECT} control={<Radio />} label="green" />
     </RadioGroup>
   </FormControl>
 
@@ -49,7 +61,7 @@ NextTry = (props) ->
   { word, onNext, onColor } = props
   <div>
     <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
-      {  <NextTryLetter letter={word[i]}/> for i in [0...5] }
+      {  <NextTryLetter key={i} letter={word[i]}/> for i in [0...5] }
     </Grid>
     <Grid container spacing={1}  style={{paddingTop: 8; paddingLeft: 8}}>
       { <Grid item xs={1} key={i}><ColorSelector id={i} onChange={onColor}/></Grid> for i in [0...5] }
@@ -110,19 +122,19 @@ class App extends Component
     for i in [0...5]
       letter = @state.suggestion[i]
       switch @state.colors[i]
-        when "lightgray"
+        when COLOR.ABSENT
           # Only keep words that don't have this letter
           candidates = @keepGray(candidates, letter)
           found = false # This is not the solution
-        when "yellow"
+        when COLOR.PRESENT
           # Only keep words without this letter at this spot but somewhere else
           candidates = @keepYellow(candidates, letter, i)
           found = false # This is not the solution
-        when "lightgreen"
+        when COLOR.CORRECT
           # Only keep words with this letter at this spot
           candidates = @keepGreen(candidates, letter, i)
         else
-          console.error "Invalid color \"#{@state.colors[i]}\""
+          console.error "handleNext: Invalid color \"#{@state.colors[i]}\""
 
     # Update the list of tries
     tries = @state.tries.concat [{ word: @state.suggestion, colors: @state.colors }]
