@@ -8,18 +8,31 @@ import { Grid } from '@mui/material';
 import { Radio, RadioGroup } from '@mui/material';
 import { FormControl, FormControlLabel } from '@mui/material';
 import { Button } from '@mui/material';
+import { Box } from '@mui/material';
 `
 
 ColoredLetter = (props) ->
   { letter, color } = props
   <Grid item xs={1}>
-    <font size={7}> <span style={ { backgroundColor: color } }> {letter} </span> </font>
+    <Box sx={{backgroundColor: color}}> <font size={7}> {letter} </font></Box>
   </Grid>
 
 Try = (props) ->
   { word, colors } = props
-  <Grid container spacing={4}>
+  <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
     { <ColoredLetter letter={word[i]} color={colors[i]} key={i}/> for i in [0...5] }
+  </Grid>
+
+Tries = (props) ->
+  { tries } = props
+  <div>
+    { <Try word={t.word} colors={t.colors} key={t.word}/> for t in tries }
+  </div>
+
+NextTryLetter = (props) ->
+  {letter} = props
+  <Grid item xs={1}>
+    <Box sx={{border: "2px solid lightgray"}}><font size={7}><b> {letter} </b></font> </Box>
   </Grid>
 
 ColorSelector = (props) ->
@@ -34,11 +47,11 @@ ColorSelector = (props) ->
 
 NextTry = (props) ->
   { word, onNext, onColor } = props
-  <div className="NextTry">
-    <Grid container spacing={4}>
-      { <Grid item xs={1} key={i}> <font size={7}> {word[i]} </font> </Grid> for i in [0...5] }
+  <div>
+    <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
+      {  <NextTryLetter letter={word[i]}/> for i in [0...5] }
     </Grid>
-    <Grid container spacing={4}>
+    <Grid container spacing={1}  style={{paddingTop: 8; paddingLeft: 8}}>
       { <Grid item xs={1} key={i}><ColorSelector id={i} onChange={onColor}/></Grid> for i in [0...5] }
       <Grid item xs={1}> <Button variant="contained" onClick={onNext}>Next</Button> </Grid>
     </Grid>
@@ -139,7 +152,7 @@ class App extends Component
 
   render: ->
     <div className="App">
-      { <Try word={t.word} colors={t.colors} key={t.word}/> for t in @state.tries }
+      <Tries tries={@state.tries}/>
       { <NextTry word={@state.suggestion} onNext={@handleNext} onColor={@handleColor}/> if !@state.found }
     </div>
 
