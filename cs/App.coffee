@@ -1,6 +1,7 @@
 `
 import './App.css'
 import database from './database'
+import wordScore from './score'
 
 import React, { Component } from 'react'
 import { Grid } from '@mui/material';
@@ -49,20 +50,23 @@ class App extends Component
     @state =
       tries: []
       candidates: database
-      suggestion: @pick(database)
+      suggestion: @pick(database, 0.1)
       colors: []
       found: false
     return
 
   # Picks a word randomly among the ones with the highest score
-  pick: (candidates) ->
+  pick: (candidates, range) ->
     # Find the highest score
     maxScore = candidates[0].score
     for c in candidates
       maxScore = Math.max(c.score, maxScore)
 
-    # Remove candidates with scores lower than the max
-    work = candidates.filter( (entry) -> entry.score >= maxScore )
+    # Keep only candidates with scores close to the max
+    if range?
+      work = candidates.filter( (entry) -> entry.score >= maxScore * (1.0 - range) )
+    else
+      work = candidates.filter( (entry) -> entry.score >= maxScore )
 
     # Select one at random
     selection = Math.floor(Math.random() * work.length)
@@ -107,9 +111,17 @@ class App extends Component
         else
           console.error "Invalid color \"#{@state.colors[i]}\""
 
-    # Update with the new list of candidates and pick one for the next suggestion
+    # Update the list of tries
     tries = @state.tries.concat [{ word: @state.suggestion, colors: @state.colors }]
-    suggestion = if found then "" else @pick(candidates)
+
+    # If not done, then compute new scores for remaining candidates and pick one
+    if not found
+      candidates[i].score = wordScore(candidates[i], candidates) for i in [0...candidates.length]
+      suggestion = @pick(candidates)
+    else
+      suggestion = ""
+
+    # Update with the new list of candidates and pick one for the next suggestion
     @setState {
       tries
       candidates
