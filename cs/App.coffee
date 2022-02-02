@@ -10,11 +10,18 @@ import { FormControl, FormControlLabel } from '@mui/material';
 import { Button } from '@mui/material';
 import { Box } from '@mui/material';
 `
+{ version } = require '../package.json'
+
 # Normal colors
 COLOR =
-  PRESENT:    "#c9b458"
-  CORRECT:    "#6aaa64"
-  ABSENT:     "#787c7e"
+  PRESENT:              "#c9b458"
+  CORRECT:              "#6aaa64"
+  ABSENT:               "#787c7e"
+  BACKGROUND:           "#ffffff"
+  TEXT:                 "#ffffff"
+  PROSPECTIVE_PRESENT:  "#e7dfb7"
+  PROSPECTIVE_CORRECT:  "#c4ddc2"
+  PROSPECTIVE_ABSENT:   "#ced0d1"
 
 # # Dark theme colors
 # COLOR =
@@ -23,10 +30,23 @@ COLOR =
 #   ABSENT:     "#3a3a3c"
 #   BACKGROUND: "#121213"
 
+
+prospectiveColorFor = (color) ->
+  switch color
+    when COLOR.ABSENT
+      return COLOR.PROSPECTIVE_ABSENT
+    when COLOR.PRESENT
+      return COLOR.PROSPECTIVE_PRESENT
+    when COLOR.CORRECT
+      return COLOR.PROSPECTIVE_CORRECT
+    else
+      console.error "prospectiveColorFor: Invalid color \"#{color}\"" if color?
+  return COLOR.BACKGROUND
+
 ColoredLetter = (props) ->
   { letter, color } = props
   <Grid item xs={1}>
-    <Box sx={{backgroundColor: color}}> <font size={7}> {letter.toUpperCase()} </font></Box>
+    <Box sx={{backgroundColor: color}}> <font size={7} color={COLOR.TEXT}><b>{letter.toUpperCase()}</b></font></Box>
   </Grid>
 
 Try = (props) ->
@@ -42,9 +62,9 @@ Tries = (props) ->
   </div>
 
 NextTryLetter = (props) ->
-  {letter} = props
+  {letter, color} = props
   <Grid item xs={1}>
-    <Box sx={{border: "2px solid lightgray"}}><font size={7}><b> {letter.toUpperCase()} </b></font> </Box>
+    <Box sx={{border: "2px solid lightgray"; backgroundColor: color}}><font size={7}><b> {letter.toUpperCase()} </b></font> </Box>
   </Grid>
 
 ColorSelector = (props) ->
@@ -58,12 +78,12 @@ ColorSelector = (props) ->
   </FormControl>
 
 NextTry = (props) ->
-  { word, onNext, onColor } = props
+  { word, colors, onNext, onColor } = props
   <div>
     <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
-      {  <NextTryLetter key={i} letter={word[i]}/> for i in [0...5] }
+      {  <NextTryLetter key={i} letter={word[i]} color={prospectiveColorFor(colors[i])}/> for i in [0...5] }
     </Grid>
-    <Grid container spacing={1}  style={{paddingTop: 8; paddingLeft: 8}}>
+    <Grid container spacing={1}  alignItems="center" style={{paddingTop: 8; paddingLeft: 8}}>
       { <Grid item xs={1} key={i}><ColorSelector id={i} onChange={onColor}/></Grid> for i in [0...5] }
       <Grid item xs={1}> <Button variant="contained" onClick={onNext}>Next</Button> </Grid>
     </Grid>
@@ -165,7 +185,8 @@ class App extends Component
   render: ->
     <div className="App">
       <Tries tries={@state.tries}/>
-      { <NextTry word={@state.suggestion} onNext={@handleNext} onColor={@handleColor}/> if !@state.found }
+      { <NextTry word={@state.suggestion} colors={@state.colors} onNext={@handleNext} onColor={@handleColor}/> if !@state.found }
+      <p style={{textAlign: "left"}}>Version: {version}</p>
     </div>
 
 
