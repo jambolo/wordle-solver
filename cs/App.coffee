@@ -26,6 +26,17 @@ COLOR =
 #   ABSENT:     "#3a3a3c"
 #   BACKGROUND: "#121213"
 
+# Counts the number of occurrences of a letter in a word
+occurrencesOf = (letter, word) ->
+  count = 0
+  count++ for c in word when c == letter
+  return count
+
+# Counts the number of previous occurrences of this letter in the word
+previousOccurrencesOf = (letter, word, i) ->
+  count = 0
+  count++ for c in word[0...i] when c == letter
+  return count
 
 prospectiveColorFor = (color) ->
   switch color
@@ -103,31 +114,30 @@ class App extends Component
       hard: false
     return
 
-  # Picks a word randomly among the ones with the highest score
-  pick: (candidates, range) ->
+  # Return the word with the highest score
+  pick: (candidates) ->
     # Find the highest score
     maxScore = candidates[0].score
     maxScore = Math.max(c.score, maxScore) for c in candidates
 
-    # Keep only candidates with scores close to the max
-    if range?
-      work = candidates.filter( (entry) -> entry.score >= maxScore * (1.0 - range) )
-    else
-      work = candidates.filter( (entry) -> entry.score >= maxScore )
+    # Keep only candidates with scores equal to the max
+    work = candidates.filter( (entry) -> entry.score >= maxScore )
 
     # Select one at random
     selection = Math.floor(Math.random() * work.length)
     return work[selection].word
 
-  # Keeps candidates that don't have the letter
-  keepGray: (candidates, letter) ->
-    candidates.filter (entry) -> not (letter in entry.word)
+  # Returns all candidates that don't have the letter, but if the letter is repeated then
+  # only candidates with fewer occurrences are returned
+  keepGray: (candidates, letter, previous) ->
+    candidates.filter (entry) -> occurrencesOf(letter, entry.word) <= previous
 
-  # Keeps candidates without this letter at this spot but somewhere else
-  keepYellow: (candidates, letter, i) ->
-    candidates.filter (entry) -> letter != entry.word[i] and letter in entry.word
+  # Returns all candidates with this letter at a different spot, but if the letter is repeated then
+  # only candidates with at least that number of times that many occurrences are returned
+  keepYellow: (candidates, letter, i, previous) ->
+    candidates.filter((entry) -> letter != entry.word[i] and occurrencesOf(letter, entry.word) > previous)
 
-  # Keeps candidates with this letter at this spot
+  # Returns all candidates with this letter at this spot
   keepGreen: (candidates, letter, i) ->
     candidates.filter (entry) -> letter == entry.word[i]
 
@@ -141,16 +151,17 @@ class App extends Component
     candidates = @state.candidates[..]
     found = true # initially assume the word is the solution (gray and yellow responses will set to false)
 
-    for i in [0...5]
+    for i in [0...@state.suggestion.length]
       letter = @state.suggestion[i]
+      previous = previousOccurrencesOf(letter, @state.suggestion, i)
       switch @state.colors[i]
         when COLOR.ABSENT
           # Only keep words that don't have this letter
-          candidates = @keepGray(candidates, letter)
+          candidates = @keepGray(candidates, letter, previous)
           found = false # This is not the solution
         when COLOR.PRESENT
-          # Only keep words without this letter at this spot but somewhere else
-          candidates = @keepYellow(candidates, letter, i)
+          # Only keep words with this letter at at a different spot
+          candidates = @keepYellow(candidates, letter, i, previous)
           found = false # This is not the solution
         when COLOR.CORRECT
           # Only keep words with this letter at this spot
