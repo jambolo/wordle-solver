@@ -4,11 +4,7 @@ import database from './database'
 import wordScore from './score'
 
 import React, { Component } from 'react'
-import { Grid } from '@mui/material';
-import { Radio, RadioGroup } from '@mui/material';
-import { FormControl, FormControlLabel } from '@mui/material';
-import { Button } from '@mui/material';
-import { Box } from '@mui/material';
+import { Box, Button, FormControl, FormControlLabel, FormGroup, Grid, Radio, RadioGroup, Switch } from '@mui/material';
 `
 { version } = require '../package.json'
 
@@ -78,16 +74,22 @@ ColorSelector = (props) ->
   </FormControl>
 
 NextTry = (props) ->
-  { word, colors, onNext, onColor } = props
+  { word, colors, hard, onNext, onColor } = props
   <div>
     <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
-      {  <NextTryLetter key={i} letter={word[i]} color={prospectiveColorFor(colors[i])}/> for i in [0...5] }
+      {  <NextTryLetter key={i} letter={word[i]} color={if hard then prospectiveColorFor(colors[i]) else COLOR.BACKGROUND}/> for i in [0...5] }
     </Grid>
     <Grid container spacing={1}  alignItems="center" style={{paddingTop: 8; paddingLeft: 8}}>
       { <Grid item xs={1} key={i}><ColorSelector id={i} onChange={onColor}/></Grid> for i in [0...5] }
       <Grid item xs={1}> <Button variant="contained" onClick={onNext}>Next</Button> </Grid>
     </Grid>
   </div>
+
+HardMode = (props) ->
+  { checked, onChange } = props
+  <FormGroup>
+    <FormControlLabel control={<Switch checked={checked} onChange={(event) -> onChange(event.target.checked)}/>} label="Hard mode" />
+  </FormGroup>
 
 class App extends Component
   constructor: (props) ->
@@ -98,14 +100,14 @@ class App extends Component
       suggestion: @pick(database, 0.1)
       colors: []
       found: false
+      hard: false
     return
 
   # Picks a word randomly among the ones with the highest score
   pick: (candidates, range) ->
     # Find the highest score
     maxScore = candidates[0].score
-    for c in candidates
-      maxScore = Math.max(c.score, maxScore)
+    maxScore = Math.max(c.score, maxScore) for c in candidates
 
     # Keep only candidates with scores close to the max
     if range?
@@ -161,8 +163,12 @@ class App extends Component
 
     # If not done, then compute new scores for remaining candidates and pick one
     if not found
-      candidates[i].score = wordScore(candidates[i], candidates) for i in [0...candidates.length]
-      suggestion = @pick(candidates)
+      if @state.hard
+        candidates[i].score = wordScore(candidates[i].word, candidates) for i in [0...candidates.length]
+        suggestion = @pick(candidates)
+      else
+        database[i].score = wordScore(database[i].word, candidates) for i in [0...database.length]
+        suggestion = @pick(database)
     else
       suggestion = ""
 
@@ -182,11 +188,19 @@ class App extends Component
     @setState { colors }
     return
 
+  # Handles the hardmode switch
+  handleHardMode: (hard) =>
+    @setState { hard }
+    return
+
   render: ->
     <div className="App">
       <Tries tries={@state.tries}/>
-      { <NextTry word={@state.suggestion} colors={@state.colors} onNext={@handleNext} onColor={@handleColor}/> if !@state.found }
-      <p style={{textAlign: "left"}}>Version: {version}</p>
+      { <NextTry word={@state.suggestion} colors={@state.colors} hard={@state.hard} onNext={@handleNext} onColor={@handleColor}/> if !@state.found }
+      <Grid container>
+        <Grid item xs={6}><HardMode checked={@state.hard} onChange={@handleHardMode}/></Grid>
+        <Grid item xs={6}><p style={{textAlign: "left"}}>Version: {version}</p></Grid>
+      </Grid>
     </div>
 
 
