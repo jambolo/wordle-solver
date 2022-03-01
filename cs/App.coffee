@@ -64,9 +64,9 @@ Try = (props) ->
 
 Tries = (props) ->
   { tries } = props
-  <div>
+  <>
     { <Try word={t.word} colors={t.colors} key={t.word}/> for t in tries }
-  </div>
+  </>
 
 NextTryLetter = (props) ->
   {letter, color} = props
@@ -86,21 +86,28 @@ ColorSelector = (props) ->
 
 NextTry = (props) ->
   { word, colors, hard, onNext, onColor } = props
-  <div>
+  <>
     <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
-      {  <NextTryLetter key={i} letter={word[i]} color={if hard then prospectiveColorFor(colors[i]) else COLOR.BACKGROUND}/> for i in [0...5] }
+      { <NextTryLetter key={i} letter={word[i]} color={if hard then prospectiveColorFor(colors[i]) else COLOR.BACKGROUND}/> for i in [0...5] }
     </Grid>
     <Grid container spacing={1}  alignItems="center" style={{paddingTop: 8; paddingLeft: 8}}>
       { <Grid item xs={1} key={i}><ColorSelector id={i} onChange={onColor}/></Grid> for i in [0...5] }
       <Grid item xs={1}> <Button variant="contained" onClick={onNext}>Next</Button> </Grid>
     </Grid>
-  </div>
+  </>
 
 HardMode = (props) ->
   { checked, onChange } = props
   <FormGroup>
     <FormControlLabel control={<Switch checked={checked} onChange={(event) -> onChange(event.target.checked)}/>} label="Hard mode" />
   </FormGroup>
+
+BottomBar = (props) ->
+  { hardMode, onHardMode, version } = props
+  <Grid container>
+    <Grid item xs={3}><HardMode checked={hardMode} onChange={onHardMode}/></Grid>
+    <Grid item xs={3}><p style={{textAlign: "left"}}>Version: {version}</p></Grid>
+  </Grid>
 
 class App extends Component
   constructor: (props) ->
@@ -127,19 +134,17 @@ class App extends Component
     selection = Math.floor(Math.random() * work.length)
     return work[selection].word
 
-  # Returns all candidates that don't have the letter, but if the letter is repeated then
-  # only candidates with fewer occurrences are returned
-  keepGray: (candidates, letter, previous) ->
-    candidates.filter (entry) -> occurrencesOf(letter, entry.word) <= previous
-
-  # Returns all candidates with this letter at a different spot, but if the letter is repeated then
-  # only candidates with at least that number of times that many occurrences are returned
-  keepYellow: (candidates, letter, i, previous) ->
-    candidates.filter((entry) -> letter != entry.word[i] and occurrencesOf(letter, entry.word) > previous)
-
   # Returns all candidates with this letter at this spot
   keepGreen: (candidates, letter, i) ->
     candidates.filter (entry) -> letter == entry.word[i]
+
+  # Returns all candidates with this letter occuring a minimum number of times at a different spot
+  keepYellow: (candidates, letter, i, minimum) ->
+    candidates.filter((entry) -> letter != entry.word[i] and occurrencesOf(letter, entry.word) >= minimum)
+
+  # Returns all candidates with fewer occurrences of the letter with none at this spot
+  keepGray: (candidates, letter, i, maximum) ->
+    candidates.filter (entry) -> letter != entry.word[i] and occurrencesOf(letter, entry.word) < maximum
 
   # Handles the Next button
   handleNext: =>
@@ -147,27 +152,32 @@ class App extends Component
     for c in @state.colors
       return if not c?
 
-    # Eliminate candidates based on the response for each letter
+    # Eliminate candidates based on the response for each letter. The order of checking is important in order to
+    # correctly handle multiple characters.
+
     candidates = @state.candidates[..]
     found = true # initially assume the word is the solution (gray and yellow responses will set to false)
+    counts = {}
 
-    for i in [0...@state.suggestion.length]
+    # Handle correct letters (COLOR.CORRECT)
+    for i in [0...@state.suggestion.length] when @state.colors[i] == COLOR.CORRECT
       letter = @state.suggestion[i]
-      previous = previousOccurrencesOf(letter, @state.suggestion, i)
-      switch @state.colors[i]
-        when COLOR.ABSENT
-          # Only keep words that don't have this letter
-          candidates = @keepGray(candidates, letter, previous)
-          found = false # This is not the solution
-        when COLOR.PRESENT
-          # Only keep words with this letter at at a different spot
-          candidates = @keepYellow(candidates, letter, i, previous)
-          found = false # This is not the solution
-        when COLOR.CORRECT
-          # Only keep words with this letter at this spot
-          candidates = @keepGreen(candidates, letter, i)
-        else
-          console.error "handleNext: Invalid color \"#{@state.colors[i]}\""
+      counts[letter] = if counts[letter]? then counts[letter] + 1 else 1
+      candidates = @keepGreen(candidates, letter, i)
+
+    # Handle present letters (COLOR.PRESENT)
+    for i in [0...@state.suggestion.length] when @state.colors[i] == COLOR.PRESENT
+      letter = @state.suggestion[i]
+      counts[letter] = if counts[letter]? then counts[letter] + 1 else 1
+      candidates = @keepYellow(candidates, letter, i, counts[letter])
+      found = false # This is not the solution
+
+    # Handle absent letters (COLOR.ABSENT)
+    for i in [0...@state.suggestion.length] when @state.colors[i] == COLOR.ABSENT
+      letter = @state.suggestion[i]
+      counts[letter] = if counts[letter]? then counts[letter] + 1 else 1
+      candidates = @keepGray(candidates, letter, i, counts[letter])
+      found = false # This is not the solution
 
     # Update the list of tries
     tries = @state.tries.concat [{ word: @state.suggestion, colors: @state.colors }]
@@ -208,10 +218,7 @@ class App extends Component
     <div className="App">
       <Tries tries={@state.tries}/>
       { <NextTry word={@state.suggestion} colors={@state.colors} hard={@state.hard} onNext={@handleNext} onColor={@handleColor}/> if !@state.found }
-      <Grid container>
-        <Grid item xs={6}><HardMode checked={@state.hard} onChange={@handleHardMode}/></Grid>
-        <Grid item xs={6}><p style={{textAlign: "left"}}>Version: {version}</p></Grid>
-      </Grid>
+      <BottomBar hardMode={@state.hard} onHardMode={@handleHardMode} version={version} />
     </div>
 
 
