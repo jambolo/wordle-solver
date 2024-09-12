@@ -32,12 +32,6 @@ occurrencesOf = (letter, word) ->
   count++ for c in word when c == letter
   return count
 
-# Counts the number of previous occurrences of this letter in the word
-previousOccurrencesOf = (letter, word, i) ->
-  count = 0
-  count++ for c in word[0...i] when c == letter
-  return count
-
 prospectiveColorFor = (color) ->
   switch color
     when COLOR.ABSENT
@@ -47,26 +41,33 @@ prospectiveColorFor = (color) ->
     when COLOR.CORRECT
       return COLOR.PROSPECTIVE_CORRECT
     else
-      console.error "prospectiveColorFor: Invalid color \"#{color}\"" if color?
+      console.error 'prospectiveColorFor: Invalid color "#{color}"' if color?
   return COLOR.BACKGROUND
 
 ColoredLetter = (props) ->
   { letter, color } = props
-  <Grid item xs={1}>
-    <Box sx={{backgroundColor: color}}> <font size={7} color={COLOR.TEXT}><b>{letter.toUpperCase()}</b></font></Box>
-  </Grid>
+  boxStyle = { backgroundColor: color }
+  <div className="letter-box filled-box" style={boxStyle}>
+    {letter}
+  </div>
+#  <Grid item xs={1}>
+#    <Box sx={{backgroundColor: color}}> <font size={7} color={COLOR.TEXT}><b>{letter.toUpperCase()}</b></font></Box>
+#  </Grid>
 
 Try = (props) ->
   { word, colors } = props
-  <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
+  <div  className="letter-row">
     { <ColoredLetter letter={word[i]} color={colors[i]} key={i}/> for i in [0...5] }
-  </Grid>
+  </div>
+#  <Grid container spacing={1} style={{paddingTop: 8; paddingLeft: 8}}>
+#    { <ColoredLetter letter={word[i]} color={colors[i]} key={i}/> for i in [0...5] }
+#  </Grid>
 
 Tries = (props) ->
   { tries } = props
-  <>
+  <div className="game-board" >
     { <Try word={t.word} colors={t.colors} key={t.word}/> for t in tries }
-  </>
+  </div>
 
 NextTryLetter = (props) ->
   {letter, color} = props
