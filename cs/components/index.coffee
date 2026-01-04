@@ -1,0 +1,7 @@
+export { default as ColoredLetter } from './ColoredLetter.coffee'
+export { default as ColorSelector, COLOR } from './ColorSelector.coffee'
+export { default as Footer } from './Footer.coffee'
+export { default as GameBoard } from './GameBoard.coffee'
+export { default as Header } from './Header.coffee'
+export { default as NextGuess } from './NextGuess.coffee'
+export { default as SuccessMessage } from './SuccessMessage.coffee'
