@@ -26,18 +26,14 @@ NextGuess = ({ word, colors, hardMode, onNext, onColor }) ->
       Suggested word
     </Typography>
 
-    <Stack direction="row" justifyContent="center" sx={{ mb: 2 }}>
+    <Stack direction="row" justifyContent="center" spacing={1} sx={{ mb: 2 }}>
       {[0, 1, 2, 3, 4].map (i) ->
         bgColor = if hardMode then getProspectiveColor(colors[i]) else '#121213'
-        <ColoredLetter key={i} letter={word[i]} color={bgColor} />
-      }
-    </Stack>
 
-    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mb: 2 }}>
-      {[0, 1, 2, 3, 4].map (i) ->
-        <Box key={i} sx={{ display: 'flex', justifyContent: 'center', width: 58 }}>
+        <Stack key={i} alignItems="center" sx={{ width: 58 }}>
+          <ColoredLetter letter={word[i]} color={bgColor} />
           <ColorSelector id={i} value={colors[i]} onChange={onColor} />
-        </Box>
+        </Stack>
       }
     </Stack>
 
