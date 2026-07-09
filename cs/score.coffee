@@ -3,13 +3,15 @@
 
 lettersIn = (word) ->
   letters = []
-  letters.push letter for letter in word when not letter in letters
+  letters.push letter for letter in word when letter not in letters
   return letters
 
 # Compute the word's score based on the candidates remaining. Higher is better.
 #
-# The score is a measure of the word's similarity to all other candidates (other than itself). The idea is that
-# information gained from the word can be applied more of the other candidates.
+# The score is a measure of the word's similarity to all candidates. The idea is that information gained from
+# the word can be applied to more of the other candidates. A word that is itself still a candidate is compared
+# with itself too — that self-comparison is a deliberate bonus (~25 points) so that in the endgame a word that
+# can actually be the answer beats a probe word that merely resembles the remaining candidates.
 
 wordScore = (word, candidates) ->
   score = 0
@@ -18,7 +20,7 @@ wordScore = (word, candidates) ->
   letters = lettersIn(word)
 
   # Compare the word to each of the candidates
-  for e in candidates when e.word
+  for e in candidates
     # 4 points for each letter in the word that matches exactly
     score += 4 for i in [0...word.length] when word[i] == e.word[i]
 

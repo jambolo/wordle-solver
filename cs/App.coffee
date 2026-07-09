@@ -5,7 +5,7 @@ import theme from './theme.coffee'
 import database from './database.coffee'
 import wordScore from './score.coffee'
 import packageJson from '../package.json'
-import { COLOR, Footer, GameBoard, Header, NextGuess, SuccessMessage } from './components/index.coffee'
+import { COLOR, Footer, GameBoard, Header, NextGuess, NoSolutionMessage, SuccessMessage } from './components/index.coffee'
 
 { version } = packageJson
 
@@ -43,8 +43,8 @@ App = ->
   [hardMode, setHardMode] = useState(false)
 
   handleNext = ->
-    # Require all colors to be set
-    return if colors.some((c) -> not c?)
+    # Require all colors to be set (colors is sparse, so check every position)
+    return unless [0...suggestion.length].every (i) -> colors[i]?
 
     newCandidates = [...candidates]
     isFound = true
@@ -74,15 +74,13 @@ App = ->
     newTries = [...tries, { word: suggestion, colors }]
 
     # Compute next suggestion if not solved
-    if not isFound
-      if hardMode
-        newCandidates[i].score = wordScore(newCandidates[i].word, newCandidates) for i in [0...newCandidates.length]
-        newSuggestion = pick(newCandidates)
-      else
-        database[i].score = wordScore(database[i].word, newCandidates) for i in [0...database.length]
-        newSuggestion = pick(database)
-    else
+    if isFound or newCandidates.length == 0
       newSuggestion = ''
+    else
+      # With <= 2 candidates left, guessing a candidate is at least as good as any probe word
+      pool = if hardMode or newCandidates.length <= 2 then newCandidates else database
+      scored = ({ word: entry.word, score: wordScore(entry.word, newCandidates) } for entry in pool)
+      newSuggestion = pick(scored)
 
     # Update state
     setTries(newTries)
@@ -115,6 +113,8 @@ App = ->
 
         {if found
           <SuccessMessage attempts={tries.length} />
+        else if candidates.length == 0
+          <NoSolutionMessage />
         else
           <NextGuess
             word={suggestion}
