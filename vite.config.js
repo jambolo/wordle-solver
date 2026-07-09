@@ -14,6 +14,16 @@ export default defineConfig({
     minify: 'esbuild',
     target: 'esnext',
     chunkSizeWarningLimit: 500,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: 'database', test: /cs\/database\.json/ },
+            { name: 'vendor', test: /node_modules/ },
+          ],
+        },
+      },
+    },
   },
   server: {
     port: 3000,
