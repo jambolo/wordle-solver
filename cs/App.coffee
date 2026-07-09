@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Box, Container, CssBaseline, ThemeProvider } from '@mui/material'
 
 import theme from './theme.coffee'
-import database from './database.coffee'
+import database from './database.json'
 import wordScore from './score.coffee'
 import packageJson from '../package.json'
 import { COLOR, Footer, GameBoard, Header, NextGuess, NoSolutionMessage, SuccessMessage } from './components/index.coffee'

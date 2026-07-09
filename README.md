@@ -29,14 +29,14 @@ pnpm preview   # preview the production build
 
 ## Building the Database
 
-The word database in `cs/database.coffee` is generated from the word list at
+The word database in `cs/database.json` is generated from the word list at
 [tabatkins/wordle-list](https://github.com/tabatkins/wordle-list) by the script
 `etc/convert-word-list.coffee`. The script reads a text file with one five-letter word
 per line, precomputes each word's initial score against the full list, and writes the
-result as a CoffeeScript module:
+result as a JSON file:
 
 ```sh
-coffee etc/convert-word-list.coffee words cs/database.coffee
+coffee etc/convert-word-list.coffee words cs/database.json
 ```
 
 The `coffee` command comes from the [CoffeeScript](https://coffeescript.org/) package

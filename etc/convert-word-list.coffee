@@ -51,15 +51,8 @@ for i in [0...db.length]
 
 console.log "#{db.length} words scored."
 
-# Write the database to a string
-output = "database = [\n"
-for entry in db[0...-1]
-  output += "  { word: \"#{entry.word}\", score: #{entry.score} },\n"
-output += "  { word: \"#{db[db.length-1].word}\", score: #{db[db.length-1].score} }\n"
-output += "]\n\nexport default database\n"
-
-# Write the database to a file
-fs.writeFileSync outputFileName, output
+# Write the database to a file as JSON
+fs.writeFileSync outputFileName, JSON.stringify(db)
 
 console.log "Database written to \"#{outputFileName}\"."
 
@@ -77,17 +70,17 @@ for e in db
 console.log "Words with the highest score of #{maxScore} are #{JSON.stringify(maxWords)}."
 
 distribution = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-bucketWidth = (maxScore + 1) / 10.0
+bucketWidth = Math.ceil((maxScore + 1) / distribution.length)
 for e in db
   bucket = Math.floor(e.score / bucketWidth)
   distribution[bucket] += 1
 
 console.log "Score distribution:"
 for i in [0...distribution.length]
-  paddedRangeMin = Math.floor(i * bucketWidth).toString().padStart(5, " ")
-  paddedRangeMax = Number(Math.floor((i + 1) * bucketWidth) - 1).toString().padStart(5, " ")
+  paddedRangeMin = (i * bucketWidth).toString().padStart(5, " ")
+  paddedRangeMax = ((i + 1) * bucketWidth - 1).toString().padStart(5, " ")
   paddedDistribution = distribution[i].toString().padStart(5, " ")
-  paddedPercent = Number(distribution[i] / db.length * 100).toFixed(1)
+  paddedPercent = (distribution[i] / db.length * 100).toFixed(1)
   console.log "#{paddedRangeMin} - #{paddedRangeMax}: #{paddedDistribution} (#{paddedPercent}%)"
 
 console.log "Done."

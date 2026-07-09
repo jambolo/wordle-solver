@@ -23,7 +23,7 @@ React 19 + Vite + CoffeeScript + Material-UI 7
 - Handles multi-letter occurrences via counting
 - Scoring in `cs/score.coffee` ranks words by letter overlap with remaining candidates
 
-**Data:** `cs/database.coffee` contains ~450KB word list array
+**Data:** `cs/database.json` contains ~380KB word list array (split into its own build chunk)
 
 **Components:** `cs/components/` - functional React components using MUI `sx` prop for styling
 
